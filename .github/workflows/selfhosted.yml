@@ -31,14 +31,14 @@ on:
       BUILD_DIFFERENT_ROM:
         description: "Command to initialize a different 'repo' project:"
         required: false
-        default: "echo 'Build Starting!'"
+        default: "repo init -u https://github.com/VoltageOS/manifest.git -b 15 --git-lfs"
       REMOVALS:
         description: "Folders to be removed before syncing:"
         required: false
       LOCAL_MANIFEST:
         description: "Personal local manifest [repository or raw]:"
         required: true
-        default: 'https://github.com/sounddrill31/local_manifests_oxygen'
+        default: 'https://raw.githubusercontent.com/mlm-games/android_local_manifests/refs/heads/main/m31s_a15.xml'
       LOCAL_MANIFEST_BRANCH:
         description: "Personal local manifest's branch:"
         required: false
@@ -46,15 +46,15 @@ on:
       DEVICE_NAME:
         description: "Device's codename:"
         required: true
-        default: "oxygen"
+        default: "m31s"
       PRODUCT_NAME:
         description: "Product to build:"
         required: true
-        default: "oxygen"
+        default: "m31s"
       BUILD_COMMAND:
         description: 'Command to be used for compiling:'
         required: true
-        default: 'mka bacon'
+        default: 'brunch m31s'
       BUILD_TYPE:
         description: 'Type of build:'
         required: true
@@ -498,6 +498,11 @@ jobs:
         else
           /opt/crave/resync.sh
         fi && \
+
+        croot && git clone https://github.com/VoltageOS/vendor_voltage-priv_keys vendor/voltage-priv/keys
+        cd vendor/voltage-priv/keys
+        ./keys.sh
+        cd ../../..
 
         # Set up build environment
         export BUILD_USERNAME=${{ github.actor }} ; \
