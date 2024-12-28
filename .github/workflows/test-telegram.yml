@@ -1,0 +1,29 @@
+name: Test Telegram Notification
+on: [workflow_dispatch]
+
+jobs:
+  test-telegram:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram Message
+        run: |
+          send_telegram_message() {
+            local message="$1"
+            response=$(curl -s -X POST \
+              "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+              -d chat_id="${CHAT_ID}" \
+              -d text="${message}" \
+              -d parse_mode="Markdown")
+            
+            echo "Telegram API Response: $response"
+            
+            if [[ "$response" != *'"ok":true'* ]]; then
+              echo "Failed to send Telegram message."
+              exit 1
+            fi
+          }
+          
+          send_telegram_message "Test Message from GitHub Actions!"
+        env:
+          CHAT_ID: ${{ secrets.TELEGRAM_TO }}
+          BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
