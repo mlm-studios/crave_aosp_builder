@@ -576,7 +576,7 @@ jobs:
         cd $PROJECTFOLDER
         echo "${{ secrets.GITHUB_TOKEN }}" > token.txt
         crave push token.txt -d $(crave ssh -- pwd | grep -v Select | sed -s 's/\r//g')/
-        crave ssh -- "export GH_UPLOAD_LIMIT="${{ secrets.GH_UPLOAD_LIMIT }}"; bash /opt/crave/github-actions/upload.sh '${{ github.run_id }}' '${{ github.event.inputs.DEVICE_NAME }}'  '${{ github.repository }}' '${{ github.event.inputs.PRODUCT_NAME }}-${{ github.run_id }}' '${{ secrets.EXTRA_FILES }}'"
+        crave ssh -- "export GH_UPLOAD_LIMIT="${{ secrets.GH_UPLOAD_LIMIT }}"; echo 'source ~/.config/envman/PATH.env' >> ~/.profile; echo 'source ~/.config/envman/PATH.env' >> ~/.bashrc; source ~/.profile; source ~/.bashrc; bash /opt/crave/github-actions/upload.sh '${{ github.run_id }}' '${{ github.event.inputs.DEVICE_NAME }}'  '${{ github.repository }}' '${{ github.event.inputs.PRODUCT_NAME }}-${{ github.run_id }}' '${{ secrets.EXTRA_FILES }}'"
 
       # Pull Errors and Display them
     - name: Display error.log
@@ -596,9 +596,62 @@ jobs:
         crave ssh -- "export TG_UPLOAD_LIMIT="${{ secrets.TG_UPLOAD_LIMIT }}"; bash /opt/crave/telegram/upload.sh '${{ github.event.inputs.DEVICE_NAME }}' '${{ secrets.EXTRA_FILES }}'"
       continue-on-error: true
 
+    - name: Preparing ROM zip
+      continue-on-error: false
+      run: |
+        cd ${{ env.BUILD_DIR }}/out
+            file_name=$(find . -maxdepth 1 -name '*.zip' | sed 's|^\./||')
+            release_title=$(basename "$file_name" .zip)
+            echo "ZIP_FILE=$file_name" >> $GITHUB_ENV
+            echo "RELEASE_DATE=$(date +'%B %-d, %Y %H:%M')" >> $GITHUB_ENV
+            echo "RELEASENAME=$release_title" >> $GITHUB_ENV
+    
+    - name: Initialize build directory
+      run: |
+        build_dir=$(crave clone list --json | jq -r '.clones[]."Cloned At"')
+        echo "BUILD_DIR=$build_dir" >> $GITHUB_ENV
+
+            
+    - name: Upload to GitHub releases
+      run: |
+        cd ${{ env.BUILD_DIR }}/out
+        NC='\033[0m'
+        RED='\033[0;31m'
+        if ! command -v gh &> /dev/null; then
+           echo "gh could not be found. Installing gh..."
+           curl -sS https://webi.sh/gh | sh
+           source ~/.config/envman/PATH.env
+           echo "gh installed."
+        fi
+        
+        if ! ls *.zip 1> /dev/null 2>&1; then
+          echo -e '\e[31mError! No zip file found. Run crave_pull.yml first!\e[0m'
+          exit 1
+        fi
+        
+        gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
+        if [[ -f "${{ env.ZIP_FILE }}" ]]; then
+            file_size=$(stat -c%s "${{ env.ZIP_FILE }}")
+            if [[ $file_size -gt 2147483648 ]]; then
+                echo -e '\e[31m${{ env.ZIP_FILE }} is too large for GitHub release so it will be skipped!\e[0m'
+                echo -e '\e[31mGo to your devspace and upload it somewhere else!\e[0m'
+                skip_zip=true
+                zip_status="Skipped (too large)"
+            else
+                zip_status="Included"
+            fi
+            zip_size=$(numfmt --to=iec $file_size)
+            release_notes="ZIP File: ${{ env.ZIP_FILE }} | Size: $zip_size | Status: $zip_status"
+            gh release create ${{ github.run_id }} --repo ${{ github.repository }} --title ${{ env.RELEASENAME }} --notes "$release_notes"
+            if [[ "$skip_zip" != true ]]; then
+                gh release upload ${{ github.run_id }} --repo ${{ github.repository }} ${{ env.BUILD_DIR }}/out/*
+            else
+                gh release upload ${{ github.run_id }} --repo ${{ github.repository }} $(find ${{ env.BUILD_DIR }}/out/ -type f ! -name '*.zip')
+            fi
+        fi
       # Remove 'crave' clone
     - name: Destroy Crave Clone
-      if: ${{ always() }}
+      if: ${{ failure() }}
       run: |
         if grep -q "$PROJECTFOLDER" <(crave clone list --json | jq -r '.clones[]."Cloned At"') || [[ "${DCDEVSPACE}" == "1" ]]; then
           crave clone destroy -y $PROJECTFOLDER || echo "Error removing $PROJECTFOLDER"
