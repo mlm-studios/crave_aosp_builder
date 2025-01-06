@@ -603,7 +603,7 @@ jobs:
 
       # Remove 'crave' clone
     - name: Destroy Crave Clone
-      if: ${{ failure() }}
+      if: ${{ always() }}
       run: |
         if grep -q "$PROJECTFOLDER" <(crave clone list --json | jq -r '.clones[]."Cloned At"') || [[ "${DCDEVSPACE}" == "1" ]]; then
           crave clone destroy -y $PROJECTFOLDER || echo "Error removing $PROJECTFOLDER"
