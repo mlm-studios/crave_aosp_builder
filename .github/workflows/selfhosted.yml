@@ -31,7 +31,7 @@ on:
       BUILD_DIFFERENT_ROM:
         description: "Command to initialize a different 'repo' project:"
         required: false
-        default: "repo init -u https://github.com/VoltageOS/manifest.git -b 15 --git-lfs"
+        default: "repo init -u https://github.com/VoltageOS/manifest.git -b 15-qpr1 --git-lfs"
       REMOVALS:
         description: "Folders to be removed before syncing:"
         required: false
@@ -503,6 +503,8 @@ jobs:
         cd vendor/voltage-priv/keys
         ./keys.sh
         cd ../../..
+
+        find device/ -type f -exec sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/voltage/config/common_full_phone.mk)|; s|lineage_\([a-zA-Z0-9_]\+\)|voltage_\1|' {} +
 
         # Set up build environment
         export BUILD_USERNAME=${{ github.actor }} ; \
