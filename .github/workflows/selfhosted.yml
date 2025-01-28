@@ -507,9 +507,9 @@ jobs:
         find device/ -type f -exec sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/voltage/config/common_full_phone.mk)|; s|lineage_\([a-zA-Z0-9_]\+\)|voltage_\1|' {} +
 
         # For matrix xml for some devices
-        set -e
-        git clone https://github.com/LineageOS/android_vendor_lineage vendor/lineage
         set +e
+        git clone https://github.com/LineageOS/android_vendor_lineage vendor/lineage
+        set -e
         
         # Set up build environment
         export BUILD_USERNAME=${{ github.actor }} ; \
