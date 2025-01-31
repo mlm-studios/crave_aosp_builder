@@ -514,8 +514,8 @@ jobs:
         # find device/ -type f -exec sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/voltage/config/common_full_phone.mk)|; s|lineage_\([a-zA-Z0-9_]\+\)|voltage_\1|' {} +
 
         # # For matrix xml for some devices (to use a lineage local manifest directly
-        # mkdir vendor/lineage/config
-        # curl -o vendor/lineage/config/device_framework_matrix.xml "https://raw.githubusercontent.com/LineageOS/android_vendor_lineage/refs/heads/lineage-22.1/config/device_framework_matrix.xml"
+        mkdir vendor/lineage/config
+        curl -o vendor/lineage/config/device_framework_matrix.xml "https://raw.githubusercontent.com/LineageOS/android_vendor_lineage/refs/heads/lineage-22.1/config/device_framework_matrix.xml"
         
         
         # Set up build environment
