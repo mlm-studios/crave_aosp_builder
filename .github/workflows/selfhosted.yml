@@ -511,9 +511,7 @@ jobs:
         ./keys.sh
         cd ../../..
 
-        find device/ -type f | xargs sed -i \
-        's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/voltage/config/common_full_phone.mk)|'
-
+        find device/ -type f -print0 | xargs -0 sed -i 's|\$\(call inherit-product, vendor/lineage/config/common_full_phone.mk\)|\$\(call inherit-product, vendor/voltage/config/common_full_phone.mk\)|'
         find device/ -type f | xargs sed -i \
         's|lineage_\([a-zA-Z0-9_]\+\)|voltage_\1|'
 
